@@ -1,80 +1,89 @@
-// Elementos do DOM
-const guessInput = document.getElementById('guessInput');
-const guessButton = document.getElementById('guessButton');
-const message = document.getElementById('message');
-const attemptsDisplay = document.getElementById('attempts');
-const resetButton = document.getElementById('resetButton');
+/**
+ * Classe que representa a lógica de um parquímetro.
+ * Encapsula as regras de cálculo de tempo e troco.
+ */
+class Parquimetro {
+    /**
+     * Calcula o tempo de permanência e o troco com base no valor inserido.
+     * @param {number} valor - O valor em dinheiro inserido pelo usuário.
+     * @returns {object} Um objeto contendo o status e a mensagem de resultado.
+     */
+    calcularPermanencia(valor) {
+        // Validação de entrada
+        if (isNaN(valor) || valor <= 0) {
+            return {
+                sucesso: false,
+                mensagem: "Por favor, insira um valor numérico válido."
+            };
+        }
 
-// Variáveis do jogo
-const maxAttempts = 10;
-let secretNumber;
-let attempts;
+        // Definição das faixas de preço
+        const PRECO_MINIMO = 1.00;
 
-// Função para iniciar ou reiniciar o jogo
-function startGame() {
-    // Gera um número aleatório entre 1 e 100
-    secretNumber = Math.floor(Math.random() * 100) + 1;
-    attempts = maxAttempts;
+        if (valor < PRECO_MINIMO) {
+            return {
+                sucesso: false,
+                mensagem: `Valor insuficiente. O mínimo é R$ ${PRECO_MINIMO.toFixed(2)}.`
+            };
+        }
 
-    // Reseta a interface
-    message.textContent = '';
-    attemptsDisplay.textContent = `Tentativas restantes: ${attempts}`;
-    guessInput.value = '';
-    guessInput.disabled = false;
-    guessButton.disabled = false;
-    resetButton.classList.add('hidden');
-    guessInput.focus();
+        let tempo, custo;
+
+        if (valor >= 3.00) {
+            tempo = 120; // minutos
+            custo = 3.00;
+        } else if (valor >= 1.75) {
+            tempo = 60; // minutos
+            custo = 1.75;
+        } else { // valor >= 1.00
+            tempo = 30; // minutos
+            custo = 1.00;
+        }
+
+        const troco = valor - custo;
+
+        let mensagem = `<strong>Tempo Liberado:</strong> ${tempo} minutos.`;
+        if (troco > 0) {
+            // Formata o troco para o padrão monetário brasileiro.
+            mensagem += `<br><strong>Troco:</strong> ${troco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+        }
+
+        return {
+            sucesso: true,
+            mensagem: mensagem
+        };
+    }
 }
 
-// Função para verificar o palpite do jogador
-function checkGuess() {
-    const userGuess = parseInt(guessInput.value);
+// --- Lógica de Interação com a Página (DOM) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const parquimetro = new Parquimetro();
 
-    // Validação da entrada
-    if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
-        message.textContent = 'Por favor, insira um número válido entre 1 e 100.';
-        return;
-    }
+    const valorInput = document.getElementById('valorInput');
+    const calcularButton = document.getElementById('calcularButton');
+    const resultadoDiv = document.getElementById('resultado');
 
-    // Decrementa as tentativas
-    attempts--;
+    calcularButton.addEventListener('click', () => {
+        // Converte o valor do input para um número de ponto flutuante.
+        const valorInserido = parseFloat(valorInput.value);
 
-    // Compara o palpite com o número secreto
-    if (userGuess === secretNumber) {
-        message.textContent = `Parabéns! Você acertou! O número era ${secretNumber}.`;
-        message.style.color = 'green';
-        endGame();
-    } else if (userGuess < secretNumber) {
-        message.textContent = 'O número secreto é MAIOR.';
-        message.style.color = 'orange';
-    } else {
-        message.textContent = 'O número secreto é MENOR.';
-        message.style.color = 'orange';
-    }
+        const resultado = parquimetro.calcularPermanencia(valorInserido);
 
-    // Atualiza a exibição de tentativas
-    attemptsDisplay.textContent = `Tentativas restantes: ${attempts}`;
+        // Exibe a mensagem na tela
+        resultadoDiv.innerHTML = resultado.mensagem;
 
-    // Verifica se o jogador perdeu
-    if (attempts === 0 && userGuess !== secretNumber) {
-        message.textContent = `Você perdeu! O número secreto era ${secretNumber}.`;
-        message.style.color = 'red';
-        endGame();
-    }
+        // Adiciona ou remove a classe de erro para estilização
+        if (resultado.sucesso) {
+            resultadoDiv.classList.remove('error');
+        } else {
+            resultadoDiv.classList.add('error');
+        }
+    });
 
-    guessInput.value = '';
-    guessInput.focus();
-}
-
-function endGame() {
-    guessInput.disabled = true;
-    guessButton.disabled = true;
-    resetButton.classList.remove('hidden');
-}
-
-// Event Listeners
-guessButton.addEventListener('click', checkGuess);
-resetButton.addEventListener('click', startGame);
-
-// Inicia o jogo ao carregar a página
-startGame();
+    // Permite que o usuário pressione "Enter" no campo de input para calcular
+    valorInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            calcularButton.click();
+        }
+    });
+});
