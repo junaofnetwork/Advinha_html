@@ -1,89 +1,129 @@
-/**
- * Classe que representa a lógica de um parquímetro.
- * Encapsula as regras de cálculo de tempo e troco.
- */
-class Parquimetro {
-    /**
-     * Calcula o tempo de permanência e o troco com base no valor inserido.
-     * @param {number} valor - O valor em dinheiro inserido pelo usuário.
-     * @returns {object} Um objeto contendo o status e a mensagem de resultado.
-     */
-    calcularPermanencia(valor) {
-        // Validação de entrada
-        if (isNaN(valor) || valor <= 0) {
-            return {
-                sucesso: false,
-                mensagem: "Por favor, insira um valor numérico válido."
-            };
-        }
 
-        // Definição das faixas de preço
-        const PRECO_MINIMO = 1.00;
 
-        if (valor < PRECO_MINIMO) {
-            return {
-                sucesso: false,
-                mensagem: `Valor insuficiente. O mínimo é R$ ${PRECO_MINIMO.toFixed(2)}.`
-            };
-        }
-
-        let tempo, custo;
-
-        if (valor >= 3.00) {
-            tempo = 120; // minutos
-            custo = 3.00;
-        } else if (valor >= 1.75) {
-            tempo = 60; // minutos
-            custo = 1.75;
-        } else { // valor >= 1.00
-            tempo = 30; // minutos
-            custo = 1.00;
-        }
-
-        const troco = valor - custo;
-
-        let mensagem = `<strong>Tempo Liberado:</strong> ${tempo} minutos.`;
-        if (troco > 0) {
-            // Formata o troco para o padrão monetário brasileiro.
-            mensagem += `<br><strong>Troco:</strong> ${troco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-        }
-
-        return {
-            sucesso: true,
-            mensagem: mensagem
-        };
-    }
-}
-
-// --- Lógica de Interação com a Página (DOM) ---
 document.addEventListener('DOMContentLoaded', () => {
-    const parquimetro = new Parquimetro();
+    // --- Seleção dos Elementos do DOM ---
+    const form = document.getElementById('user-form');
+    // Dados Pessoais
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    // Endereço
+    const cepInput = document.getElementById('cep');
+    const logradouroInput = document.getElementById('logradouro');
+    const bairroInput = document.getElementById('bairro');
+    const cidadeInput = document.getElementById('cidade');
+    const ufInput = document.getElementById('uf');
+    const cepError = document.getElementById('cep-error');
 
-    const valorInput = document.getElementById('valorInput');
-    const calcularButton = document.getElementById('calcularButton');
-    const resultadoDiv = document.getElementById('resultado');
+    // Chave para o Web Storage
+    const STORAGE_KEY = 'userFormData';
 
-    calcularButton.addEventListener('click', () => {
-        // Converte o valor do input para um número de ponto flutuante.
-        const valorInserido = parseFloat(valorInput.value);
+    // --- Funções Auxiliares ---
 
-        const resultado = parquimetro.calcularPermanencia(valorInserido);
+    /**
+     * Limpa os campos de endereço e a mensagem de erro do CEP.
+     */
+    const clearAddressFields = () => {
+        logradouroInput.value = '';
+        bairroInput.value = '';
+        cidadeInput.value = '';
+        ufInput.value = '';
+        cepError.textContent = '';
+    };
 
-        // Exibe a mensagem na tela
-        resultadoDiv.innerHTML = resultado.mensagem;
+    /**
+     * Preenche os campos de endereço com os dados da API ViaCEP.
+     * @param {object} data - O objeto de dados retornado pela API.
+     */
+    const fillAddressFields = (data) => {
+        logradouroInput.value = data.logradouro;
+        bairroInput.value = data.bairro;
+        cidadeInput.value = data.localidade;
+        ufInput.value = data.uf;
+    };
 
-        // Adiciona ou remove a classe de erro para estilização
-        if (resultado.sucesso) {
-            resultadoDiv.classList.remove('error');
-        } else {
-            resultadoDiv.classList.add('error');
+    // --- Funções Principais ---
+
+    /**
+     * Busca o CEP na API ViaCEP e preenche o formulário.
+     * Função assíncrona para aguardar a resposta da rede.
+     */
+    const handleCepLookup = async () => {
+        const cep = cepInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+        cepError.textContent = ''; // Limpa erros anteriores
+
+        // Validação do formato do CEP
+        if (cep.length !== 8) {
+            if (cep.length > 0) {
+                cepError.textContent = 'CEP deve conter 8 dígitos.';
+            }
+            return; // Interrompe a execução se o CEP for inválido
         }
-    });
 
-    // Permite que o usuário pressione "Enter" no campo de input para calcular
-    valorInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            calcularButton.click();
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            if (!response.ok) {
+                throw new Error('Não foi possível buscar o CEP. Verifique a rede.');
+            }
+            
+            const data = await response.json();
+
+            if (data.erro) {
+                // Se a API retorna 'erro: true', o CEP não foi encontrado
+                clearAddressFields();
+                cepError.textContent = 'CEP não encontrado.';
+            } else {
+                // Preenche os campos e dispara o evento para salvar
+                fillAddressFields(data);
+                form.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CEP:', error);
+            clearAddressFields();
+            cepError.textContent = 'Erro ao consultar o serviço de CEP.';
         }
-    });
+    };
+
+    /**
+     * Salva todos os dados do formulário no localStorage.
+     */
+    const saveFormData = () => {
+        const formData = {
+            name: nameInput.value,
+            email: emailInput.value,
+            cep: cepInput.value,
+            logradouro: logradouroInput.value,
+            bairro: bairroInput.value,
+            cidade: cidadeInput.value,
+            uf: ufInput.value,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+    };
+
+    /**
+     * Restaura os dados do formulário a partir do localStorage ao carregar a página.
+     */
+    const restoreFormData = () => {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+            const formData = JSON.parse(savedData);
+            // Itera sobre o objeto salvo e preenche os campos correspondentes
+            Object.keys(formData).forEach(key => {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = formData[key];
+                }
+            });
+        }
+    };
+
+    // --- Adicionando os Event Listeners ---
+
+    // 1. Busca o CEP quando o usuário sai do campo CEP
+    cepInput.addEventListener('blur', handleCepLookup);
+
+    // 2. Salva os dados no localStorage a cada alteração em qualquer campo
+    form.addEventListener('input', saveFormData);
+
+    // 3. Restaura os dados ao carregar a página
+    restoreFormData();
 });
