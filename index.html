@@ -3,53 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cadastro de Usuário</title>
-    <style>
-        /* Estilização básica para melhor visualização */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        label { font-weight: bold; margin-bottom: -10px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-        input:focus { border-color: #007bff; outline: none; }
-        .error { color: #d93025; font-size: 0.9em; height: 1em; margin-top: -10px; }
-        fieldset { border: 1px solid #ddd; border-radius: 4px; padding: 15px; }
-        legend { font-weight: bold; color: #0056b3; }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <title>Cadastro de Clientes</title>
 </head>
 <body>
     <div class="container">
-        <h1>Cadastro de Usuário</h1>
-        <form id="user-form">
-            <fieldset>
-                <legend>Dados Pessoais</legend>
-                <label for="name">Nome Completo:</label>
-                <input type="text" id="name" name="name" required>
+        <h1>Cadastro de Clientes</h1>
+        <div class="form-group">
+            <input id="nome" type="text" placeholder="Nome do cliente" required>
+            <input id="email" type="email" placeholder="E-mail do cliente" required>
+            <button id="salvar" type="button">Salvar Cliente</button>
+        </div>
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-            </fieldset>
-
-            <fieldset>      
-                <legend>Endereço</legend>
-                <label for="cep">CEP:</label>
-                <input type="text" id="cep" name="cep" placeholder="Digite o CEP e saia do campo" maxlength="8" required>
-                <span id="cep-error" class="error"></span>
-
-                <label for="logradouro">Rua:</label>
-                <input type="text" id="logradouro" name="logradouro" required>
-
-                <label for="bairro">Bairro:</label>
-                <input type="text" id="bairro" name="bairro" required>
-
-                <label for="cidade">Cidade:</label>
-                <input type="text" id="cidade" name="cidade" required>
-
-                <label for="uf">Estado (UF):</label>
-                <input type="text" id="uf" name="uf" required>
-            </fieldset>
-        </form>
+        <ul id="listaClientes">
+            <!-- Clientes serão inseridos aqui via JavaScript -->
+        </ul>
     </div>
     <script src="script.js"></script>
 </body>

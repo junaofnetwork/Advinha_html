@@ -1,64 +1,138 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+/* Importa uma fonte do Google Fonts para um visual mais limpo */
+/* Importa uma fonte do Google Fonts para um visual mais limpo */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+/* --- Reset Básico e Estilos Globais --- */
+* {
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Alinha no topo */
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+/* --- Container Principal --- */
 .container {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
 h1 {
     text-align: center;
-    color: #333;
-    margin-bottom: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 700;
 }
 
+/* --- Formulário de Adicionar Cliente --- */
 .form-group {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column; /* Empilha os itens */
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #555;
-    font-weight: bold;
-}
-
-.form-group input {
+#nome, #email {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Garante que o padding não afete a largura total */
+    padding: 12px 15px;
+    border: 1px solid #dfe6e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.form-group input:focus {
-    border-color: #007bff;
+#nome:focus, #email:focus {
     outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
-button {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #007bff;
-    color: white;
+#salvar {
+    padding: 12px 25px;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
+    background-color: #2ecc71; /* Verde para salvar */
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s;
 }
 
-button:hover {
-    background-color: #0056b3;
+#salvar:hover {
+    background-color: #27ae60;
+}
+
+/* --- Lista de Clientes --- */
+#listaClientes {
+    list-style: none;
+}
+
+#listaClientes li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #fdfdfd;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+    flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
+    gap: 10px;
+}
+
+#listaClientes li:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+#listaClientes li:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+#listaClientes li .info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#listaClientes li .info .nome {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+#listaClientes li .info .email {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+
+#listaClientes li button {
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 5px;
+    padding: 5px 10px;
+    line-height: 1;
+}
+
+#listaClientes li button:hover {
+    background-color: #c0392b;
 }

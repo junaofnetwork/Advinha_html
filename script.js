@@ -1,129 +1,138 @@
+// Elementos do DOM
+const listaClientesElement = document.getElementById('listaClientes');
+const botaoSalvar = document.getElementById('salvar');
+const inputNome = document.getElementById('nome');
+const inputEmail = document.getElementById('email');
 
+// URL da API (use a sua chave do crudcrud.com)
+// Note que mudei o final da URL para /clientes para não misturar com os dados de tarefas.
+const API_URL = 'https://crudcrud.com/api/2be5090878424b7b980a21188dd8437d/clientes';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Seleção dos Elementos do DOM ---
-    const form = document.getElementById('user-form');
-    // Dados Pessoais
-    const nameInput = document.getElementById('name');
-    const emailInput = document.getElementById('email');
-    // Endereço
-    const cepInput = document.getElementById('cep');
-    const logradouroInput = document.getElementById('logradouro');
-    const bairroInput = document.getElementById('bairro');
-    const cidadeInput = document.getElementById('cidade');
-    const ufInput = document.getElementById('uf');
-    const cepError = document.getElementById('cep-error');
+/**
+ * Função para carregar e exibir os clientes da API
+ */
+function carregarClientes() {
+    listaClientesElement.innerHTML = '<li>Carregando...</li>';
 
-    // Chave para o Web Storage
-    const STORAGE_KEY = 'userFormData';
-
-    // --- Funções Auxiliares ---
-
-    /**
-     * Limpa os campos de endereço e a mensagem de erro do CEP.
-     */
-    const clearAddressFields = () => {
-        logradouroInput.value = '';
-        bairroInput.value = '';
-        cidadeInput.value = '';
-        ufInput.value = '';
-        cepError.textContent = '';
-    };
-
-    /**
-     * Preenche os campos de endereço com os dados da API ViaCEP.
-     * @param {object} data - O objeto de dados retornado pela API.
-     */
-    const fillAddressFields = (data) => {
-        logradouroInput.value = data.logradouro;
-        bairroInput.value = data.bairro;
-        cidadeInput.value = data.localidade;
-        ufInput.value = data.uf;
-    };
-
-    // --- Funções Principais ---
-
-    /**
-     * Busca o CEP na API ViaCEP e preenche o formulário.
-     * Função assíncrona para aguardar a resposta da rede.
-     */
-    const handleCepLookup = async () => {
-        const cep = cepInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
-        cepError.textContent = ''; // Limpa erros anteriores
-
-        // Validação do formato do CEP
-        if (cep.length !== 8) {
-            if (cep.length > 0) {
-                cepError.textContent = 'CEP deve conter 8 dígitos.';
-            }
-            return; // Interrompe a execução se o CEP for inválido
-        }
-
-        try {
-            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    fetch(API_URL)
+        .then(response => {
             if (!response.ok) {
-                throw new Error('Não foi possível buscar o CEP. Verifique a rede.');
+                throw new Error('Erro ao buscar os dados da API.');
             }
-            
-            const data = await response.json();
-
-            if (data.erro) {
-                // Se a API retorna 'erro: true', o CEP não foi encontrado
-                clearAddressFields();
-                cepError.textContent = 'CEP não encontrado.';
+            return response.json();
+        })
+        .then(listaDeClientes => {
+            listaClientesElement.innerHTML = ''; // Limpa a lista
+            if (listaDeClientes.length === 0) {
+                listaClientesElement.innerHTML = '<li>Nenhum cliente cadastrado.</li>';
             } else {
-                // Preenche os campos e dispara o evento para salvar
-                fillAddressFields(data);
-                form.dispatchEvent(new Event('input', { bubbles: true }));
+                listaDeClientes.forEach(cliente => {
+                    const item = document.createElement('li');
+                    
+                    // Cria a estrutura do item da lista
+                    item.innerHTML = `
+                        <div class="info">
+                            <span class="nome">${cliente.nome}</span>
+                            <span class="email">${cliente.email}</span>
+                        </div>
+                        <button class="delete-btn" data-id="${cliente._id}">Excluir</button>
+                    `;
+                    
+                    listaClientesElement.appendChild(item);
+                });
             }
-        } catch (error) {
-            console.error('Erro ao buscar CEP:', error);
-            clearAddressFields();
-            cepError.textContent = 'Erro ao consultar o serviço de CEP.';
+        })
+        .catch(error => {
+            console.error('Houve um problema ao carregar os clientes:', error);
+            listaClientesElement.innerHTML = '<li>Erro ao carregar os clientes.</li>';
+        });
+}
+
+/**
+ * Função para salvar (cadastrar) um novo cliente
+ */
+function salvarCliente() {
+    const nome = inputNome.value;
+    const email = inputEmail.value;
+
+    // Validação simples
+    if (!nome.trim() || !email.trim()) {
+        alert('Por favor, preencha o nome e o e-mail.');
+        return;
+    }
+
+    // Validação de e-mail (básica)
+    if (!email.includes('@')) {
+        alert('Por favor, insira um e-mail válido.');
+        return;
+    }
+
+    const cliente = { nome, email };
+
+    fetch(API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cliente),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erro ao salvar o cliente.');
         }
-    };
+        return response.json();
+    })
+    .then(() => {
+        console.log('Cliente salvo com sucesso!');
+        inputNome.value = ''; // Limpa o campo de nome
+        inputEmail.value = ''; // Limpa o campo de e-mail
+        carregarClientes(); // Recarrega a lista
+    })
+    .catch(error => {
+        console.error('Houve um problema ao salvar o cliente:', error);
+        alert('Não foi possível salvar o cliente.');
+    });
+}
 
-    /**
-     * Salva todos os dados do formulário no localStorage.
-     */
-    const saveFormData = () => {
-        const formData = {
-            name: nameInput.value,
-            email: emailInput.value,
-            cep: cepInput.value,
-            logradouro: logradouroInput.value,
-            bairro: bairroInput.value,
-            cidade: cidadeInput.value,
-            uf: ufInput.value,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-    };
+/**
+ * Função para deletar um cliente
+ * @param {string} id - O ID do cliente a ser deletado
+ */
+function deletarCliente(id) {
+    // Confirmação antes de deletar
+    if (!confirm('Tem certeza que deseja excluir este cliente?')) {
+        return;
+    }
 
-    /**
-     * Restaura os dados do formulário a partir do localStorage ao carregar a página.
-     */
-    const restoreFormData = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-            const formData = JSON.parse(savedData);
-            // Itera sobre o objeto salvo e preenche os campos correspondentes
-            Object.keys(formData).forEach(key => {
-                const input = document.getElementById(key);
-                if (input) {
-                    input.value = formData[key];
-                }
-            });
+    fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erro ao deletar o cliente.');
         }
-    };
+        console.log('Cliente deletado com sucesso.');
+        carregarClientes(); // Recarrega a lista para refletir a exclusão
+    })
+    .catch(error => {
+        console.error('Houve um problema ao deletar o cliente:', error);
+        alert('Não foi possível deletar o cliente.');
+    });
+}
 
-    // --- Adicionando os Event Listeners ---
+// --- Event Listeners ---
 
-    // 1. Busca o CEP quando o usuário sai do campo CEP
-    cepInput.addEventListener('blur', handleCepLookup);
+// Carrega os clientes quando a página é carregada
+document.addEventListener('DOMContentLoaded', carregarClientes);
 
-    // 2. Salva os dados no localStorage a cada alteração em qualquer campo
-    form.addEventListener('input', saveFormData);
+// Adiciona o evento de clique para o botão de salvar
+botaoSalvar.addEventListener('click', salvarCliente);
 
-    // 3. Restaura os dados ao carregar a página
-    restoreFormData();
+// Adiciona o evento de clique para os botões de deletar (usando delegação de eventos)
+listaClientesElement.addEventListener('click', (event) => {
+    // Verifica se o elemento clicado é um botão de deletar
+    if (event.target.classList.contains('delete-btn')) {
+        const clienteId = event.target.dataset.id;
+        deletarCliente(clienteId);
+    }
 });
